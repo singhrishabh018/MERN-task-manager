@@ -1,33 +1,50 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import useFetch from '../hooks/useFetch';
 import Loader from './utils/Loader';
 import Tooltip from './utils/Tooltip';
+import io from 'socket.io-client';
+import { addTask, updateTask, removeTask } from './taskActions';
 
 const Tasks = () => {
+    const authState = useSelector(state => state.authReducer);
+    const tasks = useSelector(state => state.taskReducer.tasks); // Get tasks from Redux store
+    const [fetchData, { loading }] = useFetch();
+    const dispatch = useDispatch();
 
-  const authState = useSelector(state => state.authReducer);
-  const [tasks, setTasks] = useState([]);
-  const [fetchData, { loading }] = useFetch();
+    useEffect(() => {
+        if (!authState.isLoggedIn) return;
 
-  const fetchTasks = useCallback(() => {
-    const config = { url: "/tasks", method: "get", headers: { Authorization: authState.token } };
-    fetchData(config, { showSuccessToast: false }).then(data => setTasks(data.tasks));
-  }, [authState.token, fetchData]);
+        // Optional: Fetch initial tasks if needed
+        // const fetchTasks = useCallback(() => {
+        //    const config = { url: "/tasks", method: "get", headers: { Authorization: authState.token } };
+        //    fetchData(config, { showSuccessToast: false }).then(data => dispatch(setTasks(data.tasks)));
+        // }, [authState.token, fetchData]);
+        // fetchTasks();
 
-  useEffect(() => {
-    if (!authState.isLoggedIn) return;
-    fetchTasks();
-  }, [authState.isLoggedIn, fetchTasks]);
+        const socket = io('http://localhost:3000');
 
+        socket.on('task-created', (newTask) => {
+            dispatch(addTask(newTask));
+        });
 
-  const handleDelete = (id) => {
-    const config = { url: `/tasks/${id}`, method: "delete", headers: { Authorization: authState.token } };
-    fetchData(config).then(() => fetchTasks());
-  }
+        socket.on('task-updated', (updatedTask) => {
+            dispatch(updateTask(updatedTask));
+        });
 
+        socket.on('task-deleted', (taskId) => {
+            dispatch(removeTask(taskId));
+        });
 
+        return () => socket.disconnect(); 
+
+    }, [authState.isLoggedIn, dispatch]);
+
+    const handleDelete = (id) => {
+        const config = { url: `/tasks/${id}`, method: "delete", headers: { Authorization: authState.token } };
+        fetchData(config);
+    }
   return (
     <>
       <div className="my-2 mx-auto max-w-[700px] py-4">
