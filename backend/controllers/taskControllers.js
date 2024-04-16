@@ -38,6 +38,8 @@ exports.postTask = async (req, res) => {
       return res.status(400).json({ status: false, msg: "Description of task not found" });
     }
     const task = await Task.create({ user: req.user.id, description });
+    // Emit a Socket.IO event
+    io.emit('task-created', task);
     res.status(200).json({ task, status: true, msg: "Task created successfully.." });
   }
   catch (err) {
@@ -67,6 +69,8 @@ exports.putTask = async (req, res) => {
     }
 
     task = await Task.findByIdAndUpdate(req.params.taskId, { description }, { new: true });
+    // Emit a Socket.IO event
+    io.emit('task-updated', task);
     res.status(200).json({ task, status: true, msg: "Task updated successfully.." });
   }
   catch (err) {
@@ -92,6 +96,8 @@ exports.deleteTask = async (req, res) => {
     }
 
     await Task.findByIdAndDelete(req.params.taskId);
+    // Emit a Socket.IO event
+    io.emit('task-deleted', task);
     res.status(200).json({ status: true, msg: "Task deleted successfully.." });
   }
   catch (err) {
