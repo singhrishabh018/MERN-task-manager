@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react'
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Textarea } from '../components/utils/Input';
 import Loader from '../components/utils/Loader';
 import useFetch from '../hooks/useFetch';
 import MainLayout from '../layouts/MainLayout';
 import validateManyFields from '../validations';
+import { setTaskPriority } from './taskActions';
 
 const Task = () => {
 
@@ -84,6 +85,14 @@ const Task = () => {
     </p>
   )
 
+  const dispatch = useDispatch(); // Get dispatch function
+
+  const currentPriority = useSelector(state => state.taskReducer.priority);
+
+  const handlePriorityChange = (event) => {
+      dispatch(setTaskPriority(event.target.value)); 
+    };
+
   return (
     <>
       <MainLayout>
@@ -93,6 +102,15 @@ const Task = () => {
           ) : (
             <>
               <h2 className='text-center mb-4'>{mode === "add" ? "Add New Task" : "Edit Task"}</h2>
+              {/* *** Add Priority Dropdown *** */}
+              <div className="mb-4">
+                <label htmlFor="priority">Priority</label>
+                <select id="priority" className="form-control" value={currentPriority} onChange={handlePriorityChange}>
+                  <option value="Low" style={{ backgroundColor: 'lightgreen' }}>Low</option>
+                  <option value="Medium" style={{ backgroundColor: 'lightcoral' }}>Medium</option>
+                  <option value="High" style={{ backgroundColor: 'lightpink' }}>High</option>
+                </select>
+              </div>
               <div className="mb-4">
                 <label htmlFor="description">Description</label>
                 <Textarea type="description" name="description" id="description" value={formData.description} placeholder="Write here.." onChange={handleChange} />
