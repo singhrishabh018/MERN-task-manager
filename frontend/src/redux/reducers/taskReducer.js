@@ -1,6 +1,7 @@
 // taskReducer.js
 const initialState = {
     tasks: [] // Assuming you store tasks in an array
+    priority: 'Medium' // Consider a default priority
 };
 
 const taskReducer = (state = initialState, action) => {
@@ -16,6 +17,12 @@ const taskReducer = (state = initialState, action) => {
             return {
                 ...state,
                 tasks: state.tasks.filter(task => task._id !== action.payload)
+                
+            };
+        case 'SET_TASK_PRIORITY':
+            return {
+                ...state,
+                priority: action.payload
             };
         default:
             return state;
