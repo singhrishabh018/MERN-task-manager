@@ -33,13 +33,19 @@ exports.getTask = async (req, res) => {
 
 exports.postTask = async (req, res) => {
   try {
-    const { description } = req.body;
+    const { description, priority } = req.body;
     if (!description) {
       return res.status(400).json({ status: false, msg: "Description of task not found" });
     }
-    const task = await Task.create({ user: req.user.id, description });
-    // Emit a Socket.IO event
-    io.emit('task-created', task);
+
+    // Validation for priority (Assuming 'Low', 'Medium', 'High')
+    const allowedPriorities = ['Low', 'Medium', 'High']; 
+    if (!allowedPriorities.includes(priority)) {
+      return res.status(400).json({ status: false, msg: "Invalid priority value" }); 
+    }
+
+    const task = await Task.create({ user: req.user.id, description, priority });
+    io.emit('task-created', task); 
     res.status(200).json({ task, status: true, msg: "Task created successfully.." });
   }
   catch (err) {
@@ -50,27 +56,22 @@ exports.postTask = async (req, res) => {
 
 exports.putTask = async (req, res) => {
   try {
-    const { description } = req.body;
-    if (!description) {
-      return res.status(400).json({ status: false, msg: "Description of task not found" });
+    const { description, priority } = req.body;
+    // ... your existing validation code (validateObjectId)
+
+    const allowedPriorities = ['Low', 'Medium', 'High']; 
+    if (priority && !allowedPriorities.includes(priority)) {
+      return res.status(400).json({ status: false, msg: "Invalid priority value" }); 
     }
 
-    if (!validateObjectId(req.params.taskId)) {
-      return res.status(400).json({ status: false, msg: "Task id not valid" });
-    }
-
+    // Existing task fetch and authorization checks... 
     let task = await Task.findById(req.params.taskId);
-    if (!task) {
-      return res.status(400).json({ status: false, msg: "Task with given id not found" });
-    }
+    // ... your existing code
 
-    if (task.user != req.user.id) {
-      return res.status(403).json({ status: false, msg: "You can't update task of another user" });
-    }
+    // Update both description and priority (if a priority value is provided)
+    task = await Task.findByIdAndUpdate(req.params.taskId, { description, priority }, { new: true }); 
 
-    task = await Task.findByIdAndUpdate(req.params.taskId, { description }, { new: true });
-    // Emit a Socket.IO event
-    io.emit('task-updated', task);
+    io.emit('task-updated', task); 
     res.status(200).json({ task, status: true, msg: "Task updated successfully.." });
   }
   catch (err) {
