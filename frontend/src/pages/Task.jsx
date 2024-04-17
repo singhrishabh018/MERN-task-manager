@@ -64,13 +64,13 @@ const Task = () => {
     }
 
     if (mode === "add") {
-      const config = { url: "/tasks", method: "post", data: formData, headers: { Authorization: authState.token } };
+      const config = { url: "/tasks", method: "post", data: { ...formData, priority: currentPriority }, headers: { Authorization: authState.token } };
       fetchData(config).then(() => {
         navigate("/");
       });
     }
     else {
-      const config = { url: `/tasks/${taskId}`, method: "put", data: formData, headers: { Authorization: authState.token } };
+      const config = { url: `/tasks/${taskId}`, method: "put", data: { ...formData, priority: currentPriority }, headers: { Authorization: authState.token } };
       fetchData(config).then(() => {
         navigate("/");
       });
